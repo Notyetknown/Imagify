@@ -1,0 +1,14 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Outfit:wght@100..900&family=Poppins:wght@400;600;700;800;900&display=swap');
+
+
+@import "tailwindcss";
+
+
+*{
+  font-family: Outfit;
+}
+
+.placeholder-color{
+  color: #e0e0e0;
+  font-weight: 300;
+}
