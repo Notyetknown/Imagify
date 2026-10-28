@@ -1,29 +1,67 @@
-import React from 'react'
-import { assets } from '../assets/assets';
-import { motion } from "motion/react"
+import { motion } from 'motion/react'
+import { assets } from '../assets/assets'
+import WordRevealText from './WordRevealText'
 
-const Description = () => {
-  return (
-    <motion.div
-    initial={{ opacity: 0.2, y: 100 }}
-    transition={{ duration: 1 }}
+const Description = () => (
+  <motion.section
+    className="showcase-section"
+    initial={{ opacity: 0, y: 18 }}
     whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true }}
-    className='flex flex-col items-center justify-center my-24 p-6 md:px-28'>
-      <h1 className='text-3xl sm:text-4xl font-semibold mb-2'>Create AI Images</h1>
-      <p className='text-gray-500 mb-8'>Turn your imagination into visuals</p>
-      <div className='flex flex-col gap-5 md:gap-14 md:flex-row items-center'>
-        <img src={assets.sample_img_1} alt='' className='w-80 xl:w-96 rounded-lg' />
-        <div >
-            <h2 className='text-3xl font-medium max-w-lg mb-2.5'>Introducing the AI-Powered Text to Image Generator</h2>
-
-            <p className='text-gray-600 mb-4'>Easily bring your ideas to life with our free AI image generator. Whether you need stunning visuals or unique imagery, our tool transforms your text into eye-catching images with just a few clicks. Imagine it, describe it, and watch it come to life instantly.</p>
-
-            <p className='text-gray-600'>Simply type in a text prompt, and our cutting-edge AI will generate high-quality images in seconds. From product visuals to character designs and portraits, even concepts that don’t yet exist can be visualized effortlessly. Powered by advanced AI technology, the creative possibilities are limitless!</p>
+    transition={{ duration: 0.45 }}
+    viewport={{ once: true, amount: 0.15 }}
+  >
+    <div className="section-heading section-heading--left">
+      <span className="eyebrow">A LITTLE LOOK AT WHAT'S POSSIBLE</span>
+      <WordRevealText
+        as="h2"
+        text="Imagination has no preset."
+        accentWords={['preset.']}
+      />
+      <WordRevealText
+        text="From storybook worlds to quiet moments of inspiration, start with a sentence and see where it takes you."
+        stagger={0.022}
+      />
+    </div>
+    <div className="showcase-grid">
+      <article className="showcase-card showcase-card--feature">
+        <img
+          src={assets.sample_img_1}
+          alt="A cheerful turquoise monster in a chef's hat beside a colorful celebration cake"
+          loading="lazy"
+          width="590"
+          height="590"
+        />
+        <div className="showcase-card__caption">
+          <span>Whimsical worlds</span>
+          <span>Illustration · Imagination</span>
         </div>
+        <span className="showcase-card__index">01 / 02</span>
+      </article>
+      <article className="showcase-card showcase-card--secondary">
+        <img
+          src={assets.sample_img_2}
+          alt="A curious one-eyed creature sketching ideas at a warmly lit desk"
+          loading="lazy"
+          width="590"
+          height="590"
+        />
+        <div className="showcase-card__caption">
+          <span>Ideas in progress</span>
+          <span>Creative scene · Storytelling</span>
+        </div>
+        <span className="showcase-card__index">02 / 02</span>
+      </article>
+      <div className="showcase-note glass-panel">
+        <span className="showcase-note__mark" aria-hidden="true">✦</span>
+        <WordRevealText
+          text="Give a thought a little detail. Let the image surprise you."
+          stagger={0.025}
+          duration={0.38}
+        />
+        <span>YOUR CANVAS IS A PROMPT</span>
       </div>
-    </motion.div>
-  )
-}
+    </div>
+  </motion.section>
+)
 
 export default Description

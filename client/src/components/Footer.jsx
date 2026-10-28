@@ -1,27 +1,32 @@
-import React from 'react'
-import { assets } from '../assets/assets';
+import { Link } from 'react-router-dom'
+import { assets } from '../assets/assets'
+import BrandMark from './BrandMark'
+import WordRevealText from './WordRevealText'
 
-const Footer = () => {
-  return (
-    <div className='flex items-center justify-between gap-4 py-3 mt-20'>
-
-  <img src={assets.logo} alt="" width={150}/>
-
-  <p className='flex-1 border-l border-gray-400 pl-4 text-sm text-gray-500 max-sm:hidden' >Copyright @Rajkaran.dev | All right reserved.</p>
-
-  <div className='flex gap-2.5'>
-<a href="https://www.facebook.com/rajkaran.sharma.5245" target="_blank" rel="noopener noreferrer">
-  <img src={assets.facebook_icon} alt="Facebook" width={35} />
-</a>
-<a href="https://twitter.com" target="_blank" rel="noopener noreferrer">
-  <img src={assets.twitter_icon} alt="Twitter" width={35} />
-</a>
-<a href="https://www.instagram.com/egoistic__20x/?hl=en" target="_blank" rel="noopener noreferrer">
-  <img src={assets.instagram_icon} alt="Instagram" width={35} />
-</a>
-  </div>
-  </div>
-  )
-}
+const Footer = () => (
+  <footer className="site-footer">
+    <div className="footer-main">
+      <Link to="/" className="footer-brand" aria-label="Imagify home">
+        <BrandMark />
+      </Link>
+      <WordRevealText as="p" text="Make room for the ideas you haven’t had yet." stagger={0.03} />
+      <div className="footer-socials" aria-label="Social media">
+        <a href="https://www.facebook.com/rajkaran.sharma.5245" target="_blank" rel="noopener noreferrer" aria-label="Imagify on Facebook">
+          <img src={assets.facebook_icon} alt="" width="20" height="20" />
+        </a>
+        <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Imagify on X">
+          <img src={assets.twitter_icon} alt="" width="20" height="20" />
+        </a>
+        <a href="https://www.instagram.com/egoistic__20x/?hl=en" target="_blank" rel="noopener noreferrer" aria-label="Imagify on Instagram">
+          <img src={assets.instagram_icon} alt="" width="20" height="20" />
+        </a>
+      </div>
+    </div>
+    <div className="footer-bottom">
+      <span>© {new Date().getFullYear()} Rajkaran.dev. All rights reserved.</span>
+      <span>Thoughtfully imagined with Imagify.</span>
+    </div>
+  </footer>
+)
 
 export default Footer

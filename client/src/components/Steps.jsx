@@ -1,39 +1,42 @@
-import React from 'react'
-import { stepsData } from '../assets/assets';
-import { motion } from "motion/react"
+import { motion } from 'motion/react'
+import { stepsData } from '../assets/assets'
+import WordRevealText from './WordRevealText'
 
-const Steps = () => {
-  return (
-    <motion.div
-    initial={{ opacity: 0.2, y: 100 }}
-    transition={{ duration: 1 }}
+const Steps = () => (
+  <motion.section
+    className="steps-section"
+    initial={{ opacity: 0, y: 18 }}
     whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true }}
-     className='flex flex-col items-center justify-center my -32'>
-      <h1 className='text-3xl sm:text-4xl font-semibold mb-2'>
-        How it works
-      </h1>
-      <p className='text-lg text-gray-600 mb-8'>Transform Words Into Stunning Images</p>
-
-      <div className='space-y-4 w-full max-w-3xl text-sm'>
-        {stepsData.map((item, index) => (
-            <div 
-                key={index}
-                className='flex items-center gap-4 p-5 px-8 bg-white/20 shadow-md border border-gray-100 cursor-pointer hover:scale-[1.02] transition-all duration-300 rounded-lg'>
-                <img width={40} src={item.icon} alt='' />
-                <div>
-                    <h2 className='text-xl font-medium'>
-                        {item.title}
-                    </h2>
-                    <p className='text-gray-500'>
-                        {item.description}
-                    </p>
-                </div>
-            </div>
-        ))}
-      </div>
-    </motion.div>
-  )
-}
+    transition={{ duration: 0.45 }}
+    viewport={{ once: true, amount: 0.2 }}
+  >
+    <div className="section-heading">
+      <span className="eyebrow">A SIMPLE CREATIVE FLOW</span>
+      <WordRevealText
+        as="h2"
+        text="From thought to frame."
+        accentWords={['frame.']}
+      />
+      <WordRevealText
+        text="Three simple steps between the idea in your head and the image on your screen."
+        stagger={0.025}
+      />
+    </div>
+    <div className="steps-grid">
+      {stepsData.map((item, index) => (
+        <article className="step-card glass-panel" key={item.title}>
+          <div className="step-card__top">
+            <span className="step-number">0{index + 1}</span>
+            <span className="step-icon">
+              <img src={item.icon} alt="" width="26" height="26" loading="lazy" />
+            </span>
+          </div>
+          <WordRevealText as="h3" text={item.title} stagger={0.035} duration={0.38} />
+          <WordRevealText as="p" text={item.description} stagger={0.018} duration={0.34} />
+        </article>
+      ))}
+    </div>
+  </motion.section>
+)
 
 export default Steps

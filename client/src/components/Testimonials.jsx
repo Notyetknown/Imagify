@@ -1,52 +1,47 @@
-import React from 'react'
-import { assets, testimonialsData } from '../assets/assets';
-import { motion } from "motion/react"
+import { motion } from 'motion/react'
+import { assets, testimonialsData } from '../assets/assets'
+import WordRevealText from './WordRevealText'
 
-const Testimonials = () => {
-  return (
-    
-    <motion.div
-    initial={{ opacity: 0.2, y: 100 }}
-    transition={{ duration: 1 }}
+const Testimonials = () => (
+  <motion.section
+    className="testimonials-section"
+    initial={{ opacity: 0, y: 18 }}
     whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true }}
-    className='flex flex-col items-center justify-center my-20 py-12'>
-
-
-      <h1 className='text-3xl sm:text-4xl font-semibold mb-2'>Customer testimonials</h1>
-
-      <p className='text-gray-500 mb-12'>
-        What Our User Are Saying
-      </p>
-
-      <div className='flex flex-wrap gap-6'>
-        {testimonialsData.map((testimonials, index) => (
-            <div key={index}
-                className='bg-white/20 p-12 rounded-lg shadow-md order w-80 m-auto cursor-pointer hover:scale-[1.02] transition-all'>
-                <div className='flex flex-col items-center'>
-                    <img src ={testimonials.image} alt='' className='rounded-full w-14' />
-                    <h2 className='text-xl font-semibold mt-3
-                    '>
-                        {testimonials.name}
-                    </h2>
-                    <p className='text-gray-500 mb-4'>
-                        {testimonials.role}
-                    </p>
-                    <div className='flex mb-4'>
-                        {Array(testimonials.stars).fill().map((item, index) =>(
-                            <img key={index} src={assets.rating_star} alt='' />
-                        ))}
-                    </div>
-                    <p className='text-center text-sm text-gray-600'>
-                        {testimonials.text}
-                    </p>
-                </div>
+    transition={{ duration: 0.45 }}
+    viewport={{ once: true, amount: 0.15 }}
+  >
+    <div className="section-heading">
+      <span className="eyebrow">CREATIVE PEOPLE, REAL IDEAS</span>
+      <WordRevealText
+        as="h2"
+        text="Made for the makers."
+        accentWords={['makers.']}
+      />
+      <WordRevealText
+        text="See how creators bring their ideas into focus with Imagify."
+        stagger={0.03}
+      />
+    </div>
+    <div className="testimonials-grid">
+      {testimonialsData.map((testimonial, index) => (
+        <article className="testimonial-card glass-panel" key={`${testimonial.name}-${index}`}>
+          <div className="testimonial-stars" aria-label={`${testimonial.stars} out of 5 stars`}>
+            {Array.from({ length: testimonial.stars }, (_, starIndex) => (
+              <img key={starIndex} src={assets.rating_star} alt="" width="15" height="15" loading="lazy" />
+            ))}
+          </div>
+          <p className="testimonial-quote">“{testimonial.text}”</p>
+          <div className="testimonial-author">
+            <img src={testimonial.image} alt="" width="44" height="44" loading="lazy" />
+            <div>
+              <h3>{testimonial.name}</h3>
+              <p>{testimonial.role}</p>
             </div>
-        ))}
-      </div>
-
-    </motion.div>
-  )
-}
+          </div>
+        </article>
+      ))}
+    </div>
+  </motion.section>
+)
 
 export default Testimonials

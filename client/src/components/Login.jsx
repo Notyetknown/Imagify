@@ -1,91 +1,152 @@
-import { useContext, useEffect, useState } from 'react'
-import { assets } from '../assets/assets';
-import { AppContext } from '../context/AppContext';
-import { motion } from "motion/react"
+import { useContext, useEffect, useRef, useState } from 'react'
+import { motion } from 'motion/react'
 import axios from 'axios'
 import { toast } from 'react-toastify'
+import { AppContext } from '../context/context'
+import BrandMark from './BrandMark'
 
 const Login = () => {
+  const [state, setState] = useState('Login')
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const emailRef = useRef(null)
+  const { backendUrl, setUser, setToken, setShowLogin } = useContext(AppContext)
 
-    const[state,setState] = useState('Login')
-    const [name, setName] = useState('')
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
-
-    const { backendUrl, setUser, setToken, setShowLogin } = useContext(AppContext)
-
-    const onSubmitHandler = async (event) => {
-      event.preventDefault()
-
-      try {
-        const endpoint = state === 'Login' ? '/api/user/login' : '/api/user/register'
-        const payload = state === 'Login' ? { email, password } : { name, email, password }
-        const { data } = await axios.post(backendUrl + endpoint, payload)
-
-        if (!data.success) {
-          toast.error(data.message)
-          return
-        }
-
-        localStorage.setItem('token', data.token)
-            setUser(data.user)
-        setToken(data.token)
-        setShowLogin(false)
-        toast.success(state === 'Login' ? 'Logged in successfully' : 'Account created successfully')
-      } catch (error) {
-        toast.error(error.response?.data?.message || error.message)
-      }
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow
+    const previouslyFocused = document.activeElement
+    document.body.style.overflow = 'hidden'
+    emailRef.current?.focus()
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') setShowLogin(false)
     }
 
-    useEffect(()=>{
-        document.body.style.overflow = 'hidden';
-
+    document.addEventListener('keydown', onKeyDown)
     return () => {
-  document.body.style.overflow = 'unset';
-}
-    },[])
+      document.body.style.overflow = previousOverflow
+      document.removeEventListener('keydown', onKeyDown)
+      previouslyFocused?.focus?.()
+    }
+  }, [setShowLogin])
+
+  const onSubmitHandler = async (event) => {
+    event.preventDefault()
+
+    try {
+      const endpoint = state === 'Login' ? '/api/user/login' : '/api/user/register'
+      const payload = state === 'Login' ? { email, password } : { name, email, password }
+      const { data } = await axios.post(backendUrl + endpoint, payload)
+
+      if (!data.success) {
+        toast.error(data.message)
+        return
+      }
+
+      localStorage.setItem('token', data.token)
+      setUser(data.user)
+      setToken(data.token)
+      setShowLogin(false)
+      toast.success(state === 'Login' ? 'Logged in successfully' : 'Account created successfully')
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message)
+    }
+  }
+
   return (
-    <div className='fixed top-0 left-0 right-0 bottom-0 z-10 backdrop-blur-sm bg-black/30 flex justify-center items-center'>
+    <div
+      className="login-backdrop"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) setShowLogin(false)
+      }}
+    >
+      <motion.section
+        className="login-dialog glass-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="login-title"
+        onKeyDown={(event) => {
+          if (event.key !== 'Tab') return
+          const focusable = event.currentTarget.querySelectorAll(
+            'button:not([disabled]), input:not([disabled]), a[href], textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+          )
+          const first = focusable[0]
+          const last = focusable[focusable.length - 1]
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault()
+            last?.focus()
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault()
+            first?.focus()
+          }
+        }}
+        initial={{ opacity: 0, y: 14, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.22 }}
+      >
+        <button type="button" className="dialog-close" aria-label="Close sign-in dialog" onClick={() => setShowLogin(false)}>
+          <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="m5 5 10 10M15 5 5 15" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+        </button>
+        <div className="login-brand"><BrandMark /></div>
+        <h1 id="login-title">{state === 'Login' ? 'Welcome back' : 'Create your account'}</h1>
+        <p className="login-subtitle">
+          {state === 'Login' ? 'Sign in to pick up where your imagination left off.' : 'Join Imagify and bring your ideas to life.'}
+        </p>
 
-            <motion.form
-            initial={{ opacity: 0.2, y: 50 }}
-            transition={{ duration: 0.3 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            onSubmit={onSubmitHandler}
-            className='relative bg-white p-10 rounded-xl text-slate-500'>
-            <h1 className='text-center text-2xl text-neutral-700 font-medium'>{state}</h1>
-            <p className='text-sm text-center'>Welcome back! Please sign in to continue</p>
+        <form onSubmit={onSubmitHandler} className="login-form">
+          {state !== 'Login' && (
+            <label className="field-label">
+              Full name
+              <input
+                autoComplete="name"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                type="text"
+                placeholder="Your name"
+                required
+              />
+            </label>
+          )}
+          <label className="field-label">
+            Email address
+            <input
+              ref={emailRef}
+              autoComplete="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              type="email"
+              placeholder="you@example.com"
+              required
+            />
+          </label>
+          <label className="field-label">
+            Password
+            <input
+              autoComplete={state === 'Login' ? 'current-password' : 'new-password'}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              type="password"
+              placeholder="Enter your password"
+              required
+            />
+          </label>
+          <button type="submit" className="login-submit">
+            {state === 'Login' ? 'Sign in' : 'Create account'}
+            <span aria-hidden="true">↗</span>
+          </button>
+        </form>
 
-            {state !== 'Login' && <div className='border border-neutral-200 px-6 py-2 flex items-center gap-2 rounded-full mt-5'>
-                <img src={assets.profile_icon} alt="" className='w-6' />
-                <input value={name} onChange={(event)=>setName(event.target.value)} type="text" className='outline-none text-sm w-full' placeholder='Full Name' required/>
-            </div>}
-
-            <div className='border border-neutral-200 px-6 py-2 flex items-center gap-2 rounded-full mt-4'>
-                <img src={assets.email_icon} alt="" className='w-4' />
-                <input value={email} onChange={(event)=>setEmail(event.target.value)} type="email" className='outline-none text-sm w-full' placeholder='Email id' required/>
-            </div>
-
-            <div className='border border-neutral-200 px-6 py-2 flex items-center gap-2 rounded-full mt-4'>
-                <img src={assets.lock_icon} alt="" className='w-4' />
-                <input value={password} onChange={(event)=>setPassword(event.target.value)} type="password" className='outline-none text-sm w-full' placeholder='Password' required/>
-
-                
-            </div>
-            <p className='text-sm text-blue-600 my-4 cursor-pointer'>Forgot password?</p>
-
-            <button type='submit' className='bg-blue-600 w-full text-white py-2 rounded-full'>{state === 'Login' ? 'login' : 'create account'}</button>
-
-            {state === 'Login' ? <p className='mt-5 text-center'>Don't have an account? <span className='text-blue-600 cursor-pointer' onClick={()=>setState('Sign Up')}>Sign up</span></p>
-            :
-            <p className='mt-5 text-center'>Already have an account?<span className='text-blue-600 cursor-pointer'onClick={()=>setState('Login')}> Login </span></p>}
-
-            <img onClick={()=>setShowLogin(false)}src={assets.cross_icon} alt="" className='absolute top-5 right-5 cursor-pointer'/>
-
-            </motion.form>
-
- </div>
+        <p className="login-switch">
+          {state === 'Login' ? "Don't have an account?" : 'Already have an account?'}
+          <button type="button" onClick={() => setState(state === 'Login' ? 'Sign Up' : 'Login')}>
+            {state === 'Login' ? 'Create one' : 'Sign in'}
+          </button>
+        </p>
+        <p className="login-privacy">Your account keeps your creations and credits in sync.</p>
+      </motion.section>
+    </div>
   )
 }
 

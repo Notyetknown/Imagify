@@ -1,97 +1,197 @@
-import { useContext } from 'react'
-import { assets, plans } from '../assets/assets';
-import { AppContext } from '../context/AppContext';
-import { motion } from "motion/react"
-import { toast } from 'react-toastify';
+import { useContext, useRef, useState } from 'react'
+import { motion } from 'motion/react'
 import axios from 'axios'
+import { toast } from 'react-toastify'
+import { plans } from '../assets/assets'
+import AnimatedCreditPurchaseButton from '../components/AnimatedCreditPurchaseButton'
+import WordRevealText from '../components/WordRevealText'
+import { AppContext } from '../context/context'
 
 const BuyCredit = () => {
+  const { user, credit, backendUrl, loadCreditsData, token, setShowLogin } = useContext(AppContext)
+  const [activePlanId, setActivePlanId] = useState(null)
+  const purchaseLockRef = useRef(null)
 
-  const { user, backendUrl, loadCreditsData, token, setShowLogin } = useContext(AppContext)
+  const startPurchase = (planId) => {
+    if (purchaseLockRef.current) return false
+    purchaseLockRef.current = planId
+    setActivePlanId(planId)
+    return true
+  }
 
-  const initPay = (order) => {
+  const initPay = (order, plan) => new Promise((resolve) => {
     if (!window.Razorpay) {
       toast.error('Razorpay checkout is unavailable. Please refresh and try again.')
+      resolve({ success: false })
       return
+    }
+
+    let settled = false
+    let verificationStarted = false
+    const finish = (result) => {
+      if (settled) return
+      settled = true
+      resolve(result)
     }
 
     const options = {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID,
       amount: order.amount,
       currency: order.currency,
-      name: 'Credits Payment',
-      description: 'Credits Payment',
+      name: 'Imagify',
+      description: `${plan.credits} image credits`,
       order_id: order.id,
       receipt: order.receipt,
       handler: async (response) => {
+        verificationStarted = true
         try {
-          const { data } = await axios.post(backendUrl + '/api/user/verify-razor', response, { headers: { token } })
+          const { data } = await axios.post(
+            `${backendUrl}/api/user/verify-razor`,
+            response,
+            { headers: { token } },
+          )
 
-          if (data.success) {
-            await loadCreditsData()
-            toast.success('Payment successful. Credits have been added.')
-          } else {
-            toast.error(data.message)
+          if (!data.success) {
+            toast.error(data.message || 'Payment verification failed. Credits were not added.')
+            finish({ success: false })
+            return
           }
+
+          await loadCreditsData()
+          toast.success(`${plan.credits} credits added to your account.`)
+          finish({ success: true })
         } catch (error) {
           toast.error(error.response?.data?.message || error.message)
+          finish({ success: false })
         }
-      }
+      },
+      modal: {
+        ondismiss: () => {
+          if (verificationStarted) return
+          toast.info('Checkout was closed. No credits were added.')
+          finish({ success: false, cancelled: true })
+        },
+      },
     }
-    const rzp = new window.Razorpay(options)
-    rzp.on('payment.failed', () => toast.error('Payment failed. No credits were added.'))
-    rzp.open()
-  }
+
+    try {
+      const razorpay = new window.Razorpay(options)
+      razorpay.on('payment.failed', (response) => {
+        const message = response?.error?.description
+        toast.error(message || 'Payment failed. No credits were added.')
+        finish({ success: false })
+      })
+      razorpay.open()
+    } catch (error) {
+      toast.error(error.message || 'Unable to open Razorpay checkout.')
+      finish({ success: false })
+    }
+  })
 
   const paymentRazorpay = async (planId) => {
+    const selectedPlan = plans.find((plan) => plan.id === planId)
+    if (!selectedPlan) {
+      toast.error('That credit package is no longer available. Please refresh and try again.')
+      return { success: false }
+    }
+
     try {
-      if (!user) {
-        setShowLogin(true)
-        return
+      const { data } = await axios.post(
+        `${backendUrl}/api/user/pay-razor`,
+        { planId: selectedPlan.id },
+        { headers: { token } },
+      )
+
+      if (!data.success || !data.order) {
+        toast.error(data.message || 'Unable to initialize the payment. Please try again.')
+        return { success: false }
       }
 
-      const { data } = await axios.post(backendUrl + '/api/user/pay-razor', { planId }, { headers: { token } })
-
-      if (data.success) {
-        initPay(data.order)
-      } else {
-        toast.error(data.message)
-      }
-
+      return await initPay(data.order, selectedPlan)
     } catch (error) {
       toast.error(error.response?.data?.message || error.message)
+      return { success: false }
+    } finally {
+      purchaseLockRef.current = null
+      setActivePlanId(null)
     }
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0.2, y: 100 }}
-      transition={{ duration: 1 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      className='min-h-[80vh] text-center pt-14 mb-10'>
-      <button className='border border-gray-400 px-10 py-2 rounded-full mb-6 cursor-pointer'>Our Plans</button>
-      <h1 className='text-center text-3xl font-medium mb-6 sm:mb-10'>Choose the plan</h1>
-
-      <div className='flex flex-wrap justify-center gap-6 text-left'>
-        {plans.map((item, index) => (
-          <div
-            key={index}
-            className='bg-white border-none drop-shadow-sm rounded-lg py-12 px-8 text-gray-600 hover:scale-105 transition-all duration-500'
+    <motion.main
+      className="pricing-page"
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
+      <div className="section-heading">
+        <span className="eyebrow">CREDITS FOR YOUR NEXT IDEA</span>
+        <WordRevealText
+          as="h1"
+          text="Keep the ideas coming."
+          accentWords={['coming.']}
+        />
+        <WordRevealText
+          text="Choose a credit pack when you're ready. Your existing account balance stays right where it is."
+          stagger={0.025}
+        />
+      </div>
+      {user && (
+        <p className="balance-banner glass-panel">
+          <span className="credit-chip__icon" aria-hidden="true">✦</span>
+          You currently have <strong>{credit}</strong> credits available.
+        </p>
+      )}
+      {!user && (
+        <p className="pricing-signin-note">
+          Sign in before checkout. Your selected credit package will stay available.
+        </p>
+      )}
+      <div className="plans-grid">
+        {plans.map((plan, index) => (
+          <motion.article
+            className={`plan-card glass-panel${index === 1 ? ' plan-card--featured' : ''}`}
+            key={plan.id}
+            whileHover={activePlanId ? undefined : { y: -4 }}
+            transition={{ duration: 0.18 }}
+            aria-label={`${plan.id}, ₹${plan.price}, ${plan.credits} credits`}
           >
-            <img width={40} src={assets.logo_icon} alt="" />
-            <p className='mt-3 mb-1 font-semibold'>{item.id}</p>
-            <p className='text-sm'>{item.desc}</p>
-            <p className='mt-6'>
-              <span className='text-3xl font-medium'>₹{item.price} </span>/ {item.credits} credits
+            <span className="plan-icon" aria-hidden="true">✦</span>
+            <p className="plan-name">{plan.id}</p>
+            <WordRevealText
+              as="p"
+              className="plan-description"
+              text={plan.desc}
+              stagger={0.02}
+              duration={0.34}
+            />
+            <p className="plan-price">
+              <span className="plan-currency">₹</span>{plan.price}
+              <span className="plan-unit">one-time</span>
             </p>
-            <button onClick={() => paymentRazorpay(item.id)} className='w-full bg-gray-800 text-white mt-8 text-sm rounded-md py-2.5 min-w-52 cursor-pointer'>
-              {user ? 'Purchase' : 'Get Started'}
-            </button>
-          </div>
+            <div className="plan-credits">
+              <span className="credit-chip__icon" aria-hidden="true">✦</span>
+              <strong>{plan.credits}</strong> image credits
+            </div>
+            <AnimatedCreditPurchaseButton
+              planId={plan.id}
+              authenticated={Boolean(user)}
+              disabled={Boolean(activePlanId) && activePlanId !== plan.id}
+              onStart={startPurchase}
+              onConfirm={paymentRazorpay}
+              onSignIn={() => setShowLogin(true)}
+            />
+            <p className="plan-footnote">Secure checkout with Razorpay</p>
+          </motion.article>
         ))}
       </div>
-    </motion.div>
+      {activePlanId && (
+        <p className="payment-status-note" role="status" aria-live="polite">
+          Complete payment in the secure Razorpay checkout. Credits are added after verification.
+        </p>
+      )}
+      <p className="pricing-note">All credit packs and prices are the current Imagify plans.</p>
+    </motion.main>
   )
 }
 
